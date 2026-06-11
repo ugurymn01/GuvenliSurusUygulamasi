@@ -954,8 +954,8 @@
 
     // ========================================================================
     // HIZ AŞIMI SİMÜLASYONU (demo)
-    // Hız sınırı 30 km/h olan gerçek bir konuma (Odesa Bulvarı, İstanbul)
-    // 75 km/h hızla veri gönderir -> backend Overpass'tan 30 alır -> SPEED_LIMIT_EXCEEDED
+    // Ani fren gibi deterministik: hız sınırını (30) doğrudan gönderir, backend
+    // Overpass'a gitmeden SPEED_LIMIT_EXCEEDED alarmı üretir. (75 km/h > 30)
     // ========================================================================
     $('speedBtn').addEventListener('click', async () => {
       if (!token) {
@@ -968,14 +968,14 @@
       }
 
       $('speedBtn').disabled = true;
-      $('lastSent').textContent = 'Hız sınırı sorgulanıyor...';
       try {
         const payload = {
           deviceId: currentDeviceId,
           timestamp: new Date().toISOString(),
           accelerometer: { x: 0, y: 0, z: 9.8 },
           gyroscope: { alpha: 0, beta: 0, gamma: 0 },
-          location: { latitude: 41.0532519, longitude: 28.9687237, speed: 75 }
+          location: { latitude: 41.0532519, longitude: 28.9687237, speed: 75 },
+          speedLimit: 30
         };
         await postSensorData(payload);
         sentCount++;

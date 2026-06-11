@@ -102,12 +102,17 @@ router.post(
         createdAlarms.push(alarm);
       }
 
-      // 2) Hız sınırı kontrolü (Overpass API)
+      // 2) Hız sınırı kontrolü
       const loc = location || {};
       if (loc.latitude != null && loc.longitude != null && typeof loc.speed === 'number' && loc.speed > 0) {
-        // Mobil istemci hızı km/h olarak gönderir
+        // Mobil istemci hızı km/h olarak gönderir.
         const speedKmh = loc.speed;
-        const speedLimit = await getSpeedLimit(loc.latitude, loc.longitude);
+        // İstemci speedLimit gönderdiyse (simülasyon) onu kullan — Overpass'a gitme.
+        // Aksi halde gerçek sürüşte konumdan Overpass ile hız sınırını sorgula.
+        const speedLimit =
+          typeof req.body.speedLimit === 'number'
+            ? req.body.speedLimit
+            : await getSpeedLimit(loc.latitude, loc.longitude);
         if (speedLimit && speedKmh > speedLimit) {
           const speedAlarm = await Alarm.create({
             deviceId: sensorData.deviceId,
