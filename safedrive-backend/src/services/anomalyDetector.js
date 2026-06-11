@@ -1,4 +1,14 @@
 const SensorData = require('../models/SensorData');
+const DriverProfile = require('../models/DriverProfile');
+
+// Alarm türüne göre skor cezası (puan)
+const SCORE_PENALTIES = {
+  HARD_BRAKE: 10,
+  SHARP_TURN: 7,
+  RAPID_ACCELERATION: 5,
+  VIBRATION: 3,
+  SPEED_LIMIT_EXCEEDED: 8
+};
 
 // Standart sapma hesaplama (popülasyon standart sapması)
 const standardDeviation = (values) => {
@@ -69,4 +79,102 @@ const detectAnomaly = async (sensorData) => {
   return null;
 };
 
+const REASON_LABELS = {
+  HARD_BRAKE: 'Ani Fren',
+  SHARP_TURN: 'Sert Dönüş',
+  RAPID_ACCELERATION: 'Ani Hızlanma',
+  VIBRATION: 'Sarsıntı',
+  SPEED_LIMIT_EXCEEDED: 'Hız Sınırı Aşımı'
+};
+
+/**
+ * Alarm türüne göre sürücünün skorunu düşürür (atomic).
+ * Race condition'ı önlemek için aggregation pipeline'lı findOneAndUpdate kullanır.
+ * Skor 0'ın altına düşmez. scoreHistory'ye kayıt ekler ve scoreUpdate yayınlar.
+ */
+const applyAlarmPenalty = async (userId, type, io) => {
+  const penalty = SCORE_PENALTIES[type];
+  if (!penalty || !userId) return null;
+
+  const reason = REASON_LABELS[type] || type;
+  const now = new Date();
+
+  const updated = await DriverProfile.findOneAndUpdate(
+    { userId },
+    [
+      { $set: { score: { $max: [0, { $subtract: ['$score', penalty] }] } } },
+      {
+        $set: {
+          scoreHistory: {
+            $concatArrays: [
+              '$scoreHistory',
+              [{ score: '$score', reason, change: -penalty, timestamp: now }]
+            ]
+          }
+        }
+      }
+    ],
+    { new: true }
+  );
+
+  if (updated && io) {
+    io.emit('scoreUpdate', {
+      userId: String(userId),
+      newScore: updated.score,
+      change: -penalty,
+      reason
+    });
+  }
+  return updated;
+};
+
+/**
+ * Temiz sürüş ödülü: skoru +1 artırır (max 100).
+ * En son skor değişikliğinin üzerinden 10 dk geçmediyse atlar (spam önleme).
+ */
+const rewardCleanDriving = async (userId, io) => {
+  if (!userId) return null;
+  const profile = await DriverProfile.findOne({ userId });
+  if (!profile || profile.score >= 100) return null;
+
+  const last = profile.scoreHistory[profile.scoreHistory.length - 1];
+  const TEN_MIN = 10 * 60 * 1000;
+  if (last && Date.now() - new Date(last.timestamp).getTime() < TEN_MIN) {
+    return null;
+  }
+
+  const now = new Date();
+  const updated = await DriverProfile.findOneAndUpdate(
+    { userId, score: { $lt: 100 } },
+    [
+      { $set: { score: { $min: [100, { $add: ['$score', 1] }] } } },
+      {
+        $set: {
+          scoreHistory: {
+            $concatArrays: [
+              '$scoreHistory',
+              [{ score: '$score', reason: 'Temiz Sürüş', change: 1, timestamp: now }]
+            ]
+          }
+        }
+      }
+    ],
+    { new: true }
+  );
+
+  if (updated && io) {
+    io.emit('scoreUpdate', {
+      userId: String(userId),
+      newScore: updated.score,
+      change: 1,
+      reason: 'Temiz Sürüş'
+    });
+  }
+  return updated;
+};
+
 module.exports = detectAnomaly;
+module.exports.applyAlarmPenalty = applyAlarmPenalty;
+module.exports.rewardCleanDriving = rewardCleanDriving;
+module.exports.SCORE_PENALTIES = SCORE_PENALTIES;
+module.exports.REASON_LABELS = REASON_LABELS;

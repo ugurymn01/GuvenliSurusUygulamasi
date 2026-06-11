@@ -8,7 +8,13 @@ const alarmSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['HARD_BRAKE', 'SHARP_TURN', 'RAPID_ACCELERATION', 'VIBRATION'],
+    enum: [
+      'HARD_BRAKE',
+      'SHARP_TURN',
+      'RAPID_ACCELERATION',
+      'VIBRATION',
+      'SPEED_LIMIT_EXCEEDED'
+    ],
     required: true
   },
   severity: {
@@ -17,6 +23,9 @@ const alarmSchema = new mongoose.Schema({
     required: true
   },
   value: {
+    type: Number
+  },
+  speedLimit: {
     type: Number
   },
   timestamp: {

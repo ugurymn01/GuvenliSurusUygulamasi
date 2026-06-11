@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, query, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const SensorData = require('../models/SensorData');
 const Alarm = require('../models/Alarm');
 const Device = require('../models/Device');
@@ -7,6 +7,36 @@ const detectAnomaly = require('../services/anomalyDetector');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
+
+const TEN_MIN = 10 * 60 * 1000;
+
+/**
+ * OpenStreetMap Overpass API ile konumdaki hız sınırını (km/h) sorgular.
+ * 5 saniye timeout; cevap yoksa/parse edilemezse null döner (hata fırlatmaz).
+ */
+async function getSpeedLimit(lat, lng) {
+  const q = `[out:json];way(around:30,${lat},${lng})[maxspeed];out;`;
+  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    for (const el of data.elements || []) {
+      const ms = el.tags && el.tags.maxspeed;
+      if (ms) {
+        // "30", "50 km/h", "30 mph" -> sadece sayı
+        const n = parseInt(String(ms).replace(/[^0-9]/g, ''), 10);
+        if (n) return n;
+      }
+    }
+    return null;
+  } catch (err) {
+    return null; // timeout / ağ hatası -> kontrolü atla
+  }
+}
 
 // POST /api/sensor-data
 router.post(
@@ -43,30 +73,75 @@ router.post(
       device.lastSeen = new Date();
       await device.save();
 
-      // Anomali tespiti
-      const anomaly = await detectAnomaly(sensorData);
+      const io = req.app.get('io');
+      const createdAlarms = [];
 
-      let alarm = null;
+      // 1) Sensör tabanlı anomali tespiti
+      const anomaly = await detectAnomaly(sensorData);
       if (anomaly) {
-        alarm = await Alarm.create({
+        const alarm = await Alarm.create({
           deviceId: sensorData.deviceId,
           type: anomaly.type,
           severity: anomaly.severity,
           value: anomaly.value,
           timestamp: sensorData.timestamp
         });
+        createdAlarms.push(alarm);
       }
 
-      // Socket.io eventleri
-      const io = req.app.get('io');
+      // 2) Hız sınırı kontrolü (Overpass API)
+      const loc = location || {};
+      if (loc.latitude != null && loc.longitude != null && typeof loc.speed === 'number' && loc.speed > 0) {
+        // Mobil istemci hızı km/h olarak gönderir
+        const speedKmh = loc.speed;
+        const speedLimit = await getSpeedLimit(loc.latitude, loc.longitude);
+        if (speedLimit && speedKmh > speedLimit) {
+          const speedAlarm = await Alarm.create({
+            deviceId: sensorData.deviceId,
+            type: 'SPEED_LIMIT_EXCEEDED',
+            severity: 'high',
+            value: Math.round(speedKmh),
+            speedLimit,
+            timestamp: sensorData.timestamp
+          });
+          createdAlarms.push(speedAlarm);
+          if (io) {
+            io.emit('speedWarning', {
+              deviceId: String(device._id),
+              userId: String(device.owner),
+              currentSpeed: Math.round(speedKmh),
+              speedLimit,
+              excess: Math.round(speedKmh - speedLimit)
+            });
+          }
+        }
+      }
+
+      // 3) Skor güncelleme: her alarm için ceza uygula
+      for (const alarm of createdAlarms) {
+        await detectAnomaly.applyAlarmPenalty(device.owner, alarm.type, io);
+      }
+
+      // 4) Temiz sürüş ödülü: bu turda alarm yoksa ve son 10 dk'da alarm yoksa +1
+      if (createdAlarms.length === 0) {
+        const recentAlarm = await Alarm.findOne({
+          deviceId: device._id,
+          timestamp: { $gte: new Date(Date.now() - TEN_MIN) }
+        });
+        if (!recentAlarm) {
+          await detectAnomaly.rewardCleanDriving(device.owner, io);
+        }
+      }
+
+      // 5) Socket.io olayları
       if (io) {
         io.emit('newData', sensorData);
-        if (alarm) {
+        for (const alarm of createdAlarms) {
           io.emit('newAlarm', alarm);
         }
       }
 
-      return res.status(201).json({ sensorData, alarm });
+      return res.status(201).json({ sensorData, alarms: createdAlarms });
     } catch (err) {
       return res.status(500).json({ error: 'Sunucu hatası' });
     }

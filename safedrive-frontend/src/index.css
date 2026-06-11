@@ -708,6 +708,35 @@ tr:last-child td {
   margin-top: 2px;
 }
 
+/* Sürücü skor çubuğu */
+.score-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.score-bar {
+  flex: 1;
+  min-width: 80px;
+  height: 8px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.score-num {
+  font-weight: 700;
+  font-size: 14px;
+  min-width: 28px;
+  text-align: right;
+}
+
 .map-card {
   padding: 0;
   overflow: hidden;

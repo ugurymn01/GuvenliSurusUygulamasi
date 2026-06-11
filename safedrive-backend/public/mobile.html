@@ -167,9 +167,47 @@
     .sent-info { text-align: center; color: var(--muted); font-size: 13px; margin-top: 8px; }
     .logout { text-align: center; margin-top: 6px; }
     .logout a { color: var(--muted); font-size: 14px; text-decoration: underline; }
+
+    /* Sürücü profil kartı */
+    .profile-card { display: flex; align-items: center; gap: 16px; }
+    .profile-meta { flex: 1; }
+    .profile-name { font-size: 18px; font-weight: 700; }
+    .profile-company { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .gauge {
+      width: 92px; height: 92px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      background: conic-gradient(var(--gauge-color, #16a34a) calc(var(--score, 100) * 3.6deg), #334155 0deg);
+    }
+    .gauge-inner {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--card);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .gauge-score { font-size: 26px; font-weight: 800; line-height: 1; }
+    .gauge-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .score-history { margin-top: 12px; }
+    .score-history h3 { font-size: 13px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .score-item { font-size: 13px; padding: 4px 0; border-top: 1px solid var(--card2); display: flex; justify-content: space-between; }
+    .score-item .neg { color: #fca5a5; font-weight: 700; }
+    .score-item .pos { color: #4ade80; font-weight: 700; }
+
+    /* Uyarı banner'ları */
+    .banner {
+      position: fixed; left: 12px; right: 12px; top: 12px; z-index: 100;
+      padding: 14px 16px; border-radius: 12px; font-weight: 700; font-size: 14px;
+      color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      transition: opacity 0.25s ease; text-align: center;
+    }
+    .banner.score { background: #b91c1c; }
+    .banner.speed { background: #c2410c; }
   </style>
 </head>
 <body>
+
+  <!-- Uyarı banner'ları -->
+  <div id="scoreBanner" class="banner score hidden"></div>
+  <div id="speedBanner" class="banner speed hidden"></div>
 
   <h1>🚗 SafeDrive Mobil</h1>
   <div class="sub">Sürücü Sensör Toplayıcı</div>
@@ -208,8 +246,41 @@
     </div>
   </div>
 
+  <!-- ====================== PROFİL OLUŞTURMA EKRANI ====================== -->
+  <div id="profileScreen" class="hidden">
+    <div class="card">
+      <h3 style="margin-bottom:12px">Sürücü Profili Oluştur</h3>
+      <label>Ad</label>
+      <input id="profFirstName" type="text" placeholder="Adınız" />
+      <label>Soyad</label>
+      <input id="profLastName" type="text" placeholder="Soyadınız" />
+      <button id="profileBtn" class="btn-green">Profili Oluştur</button>
+      <div id="profileError" class="error"></div>
+    </div>
+  </div>
+
   <!-- ====================== SENSÖR EKRANI ====================== -->
   <div id="sensorScreen" class="hidden">
+
+    <!-- Sürücü profil kartı -->
+    <div class="card">
+      <div class="profile-card">
+        <div class="gauge" id="gauge">
+          <div class="gauge-inner">
+            <div class="gauge-score" id="gaugeScore">--</div>
+            <div class="gauge-label">SKOR</div>
+          </div>
+        </div>
+        <div class="profile-meta">
+          <div class="profile-name" id="profName">—</div>
+          <div class="profile-company" id="profCompany">—</div>
+        </div>
+      </div>
+      <div class="score-history">
+        <h3>Son Skor Değişimleri</h3>
+        <div id="scoreList"><div class="score-item">Henüz kayıt yok</div></div>
+      </div>
+    </div>
 
     <div id="status" class="status off">
       <span class="dot"></span><span id="statusText">Durduruldu</span>
@@ -260,6 +331,8 @@
     <div class="logout"><a id="logoutLink">Çıkış yap</a></div>
   </div>
 
+  <!-- Socket.io istemcisi (backend tarafından sunulur) -->
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     // ========================================================================
     // BACKEND ADRESİ
@@ -283,11 +356,26 @@
 
     // --- Durum ---
     let token = localStorage.getItem('token') || null;
+    let currentUserId = null;   // JWT'den çözülen sürücü id'si
     let currentDeviceId = null; // Otomatik hazırlanan cihazın Mongo _id'si
     let running = false;
     let sendTimer = null;
     let geoWatchId = null;
     let sentCount = 0;
+    let recentChanges = [];     // Son skor değişimleri (ekranda gösterim için)
+
+    // JWT payload'ından userId çöz
+    function decodeUserId(t) {
+      try {
+        const payload = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return payload.userId || null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Socket.io bağlantısı (canlı skor/hız uyarıları için)
+    const socket = io(BASE_URL, { transports: ['websocket', 'polling'] });
 
     // Son okunan sensör değerleri
     const latest = {
@@ -326,7 +414,7 @@
 
         token = data.token;
         localStorage.setItem('token', token);
-        showSensorScreen();
+        await proceedAfterAuth();
       } catch (err) {
         $('loginError').textContent =
           err.message === 'Failed to fetch'
@@ -338,12 +426,140 @@
       }
     });
 
+    // Giriş/kayıt sonrası: profil var mı kontrol et; yoksa profil oluşturma ekranı göster
+    async function proceedAfterAuth() {
+      currentUserId = decodeUserId(token);
+      try {
+        const res = await fetch(`${BASE_URL}/api/driver-profile`, {
+          headers: apiHeaders({ Authorization: `Bearer ${token}` })
+        });
+        if (res.status === 404) {
+          showProfileForm();
+          return;
+        }
+        const profile = await res.json();
+        renderProfile(profile);
+        showSensorScreen();
+      } catch (e) {
+        // Profil alınamazsa yine de sensör ekranına geç
+        showSensorScreen();
+      }
+    }
+
+    function showProfileForm() {
+      $('authArea').classList.add('hidden');
+      $('sensorScreen').classList.add('hidden');
+      $('profileScreen').classList.remove('hidden');
+    }
+
     function showSensorScreen() {
       $('authArea').classList.add('hidden');
+      $('profileScreen').classList.add('hidden');
       $('sensorScreen').classList.remove('hidden');
       // Cihazı otomatik olarak hazırla (oluştur veya mevcut olanı bul)
       ensureDevice();
     }
+
+    // ========================================================================
+    // SÜRÜCÜ PROFİLİ
+    // ========================================================================
+    function gaugeColor(score) {
+      if (score >= 80) return '#16a34a';
+      if (score >= 60) return '#ca8a04';
+      return '#dc2626';
+    }
+
+    function updateGauge(score) {
+      const g = $('gauge');
+      g.style.setProperty('--score', score);
+      g.style.setProperty('--gauge-color', gaugeColor(score));
+      $('gaugeScore').textContent = score;
+    }
+
+    function renderScoreList() {
+      const el = $('scoreList');
+      if (!recentChanges.length) {
+        el.innerHTML = '<div class="score-item">Henüz kayıt yok</div>';
+        return;
+      }
+      el.innerHTML = recentChanges
+        .slice(0, 3)
+        .map((c) => {
+          const cls = c.change < 0 ? 'neg' : 'pos';
+          const sign = c.change > 0 ? '+' : '';
+          return `<div class="score-item"><span>${c.reason}</span><span class="${cls}">${sign}${c.change} puan</span></div>`;
+        })
+        .join('');
+    }
+
+    function renderProfile(profile) {
+      $('profName').textContent = (profile.firstName || '') + ' ' + (profile.lastName || '');
+      $('profCompany').textContent = profile.companyName || '—';
+      updateGauge(typeof profile.score === 'number' ? profile.score : 100);
+      // scoreHistory en eskiden yeniye gelir; en yeni 3'ü ters sırada göster
+      const hist = (profile.scoreHistory || []).slice().reverse();
+      recentChanges = hist.map((h) => ({ reason: h.reason, change: h.change }));
+      renderScoreList();
+    }
+
+    // Profil oluşturma
+    $('profileBtn').addEventListener('click', async () => {
+      const firstName = $('profFirstName').value.trim();
+      const lastName = $('profLastName').value.trim();
+      $('profileError').textContent = '';
+      if (!firstName || !lastName) {
+        $('profileError').textContent = 'Ad ve soyad zorunludur';
+        return;
+      }
+      $('profileBtn').disabled = true;
+      try {
+        const res = await fetch(`${BASE_URL}/api/driver-profile`, {
+          method: 'POST',
+          headers: apiHeaders({ Authorization: `Bearer ${token}` }),
+          body: JSON.stringify({ firstName, lastName })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Profil oluşturulamadı');
+        // Oluşan profili getirip göster
+        await proceedAfterAuth();
+      } catch (err) {
+        $('profileError').textContent = err.message;
+      } finally {
+        $('profileBtn').disabled = false;
+      }
+    });
+
+    // ========================================================================
+    // CANLI UYARILAR (Socket.io)
+    // ========================================================================
+    let scoreBannerTimer = null;
+    let speedBannerTimer = null;
+
+    socket.on('scoreUpdate', (d) => {
+      if (!currentUserId || d.userId !== currentUserId) return;
+      updateGauge(d.newScore);
+      recentChanges.unshift({ reason: d.reason, change: d.change });
+      recentChanges = recentChanges.slice(0, 10);
+      renderScoreList();
+      if (d.change < 0) {
+        const b = $('scoreBanner');
+        b.textContent = `Skorunuz düştü! ${d.reason}: ${d.change} puan`;
+        b.classList.remove('hidden');
+        clearTimeout(scoreBannerTimer);
+        scoreBannerTimer = setTimeout(() => b.classList.add('hidden'), 3000);
+      }
+    });
+
+    socket.on('speedWarning', (d) => {
+      const mine = (currentUserId && d.userId === currentUserId) ||
+                   (currentDeviceId && d.deviceId === currentDeviceId);
+      if (!mine) return;
+      const b = $('speedBanner');
+      b.textContent = `Hız Sınırı Aşıldı! ${d.currentSpeed} km/h / Limit: ${d.speedLimit} km/h`;
+      b.classList.remove('hidden');
+      clearTimeout(speedBannerTimer);
+      speedBannerTimer = setTimeout(() => b.classList.add('hidden'), 5000);
+    });
 
     // ========================================================================
     // OTOMATİK CİHAZ HAZIRLAMA
@@ -490,10 +706,10 @@
           throw new Error(data.error || 'Kayıt başarısız');
         }
 
-        // Kayıt sonrası otomatik giriş
+        // Kayıt sonrası otomatik giriş -> profil kontrolü (yeni sürücüde profil yok)
         token = data.token;
         localStorage.setItem('token', token);
-        showSensorScreen();
+        await proceedAfterAuth();
       } catch (err) {
         $('registerError').textContent =
           err.message === 'Failed to fetch'
@@ -505,8 +721,8 @@
       }
     });
 
-    // Sayfa açılışında token varsa direkt sensör ekranı
-    if (token) showSensorScreen();
+    // Sayfa açılışında token varsa profil kontrolüyle devam et
+    if (token) proceedAfterAuth();
 
     // ========================================================================
     // ÇIKIŞ
@@ -516,7 +732,9 @@
       localStorage.removeItem('token');
       token = null;
       currentDeviceId = null;
+      currentUserId = null;
       $('sensorScreen').classList.add('hidden');
+      $('profileScreen').classList.add('hidden');
       $('authArea').classList.remove('hidden');
     });
 

@@ -16,6 +16,8 @@ const deviceRoutes = require('./routes/device');
 const userRoutes = require('./routes/user');
 const companyRoutes = require('./routes/company');
 const applicationRoutes = require('./routes/application');
+const driverProfileRoutes = require('./routes/driverProfile');
+const driverProfilesRoutes = require('./routes/driverProfiles');
 
 const app = express();
 const server = http.createServer(app);
@@ -59,6 +61,8 @@ app.use('/api/devices', deviceRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/driver-profile', driverProfileRoutes);
+app.use('/api/driver-profiles', driverProfilesRoutes);
 
 // 404 yakalayıcı
 app.use((req, res) => {
