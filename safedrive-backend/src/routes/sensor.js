@@ -10,32 +10,45 @@ const router = express.Router();
 
 const TEN_MIN = 10 * 60 * 1000;
 
+// Overpass aynaları (ilki yavaş/dolu olursa sıradakine geçilir)
+const OVERPASS_HOSTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter'
+];
+
 /**
  * OpenStreetMap Overpass API ile konumdaki hız sınırını (km/h) sorgular.
- * 5 saniye timeout; cevap yoksa/parse edilemezse null döner (hata fırlatmaz).
+ * Her ayna için 5 saniye timeout; hiçbiri cevap vermezse null döner (hata fırlatmaz).
  */
 async function getSpeedLimit(lat, lng) {
   const q = `[out:json];way(around:30,${lat},${lng})[maxspeed];out;`;
-  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`;
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timer);
-    if (!res.ok) return null;
-    const data = await res.json();
-    for (const el of data.elements || []) {
-      const ms = el.tags && el.tags.maxspeed;
-      if (ms) {
-        // "30", "50 km/h", "30 mph" -> sadece sayı
-        const n = parseInt(String(ms).replace(/[^0-9]/g, ''), 10);
-        if (n) return n;
+  for (const host of OVERPASS_HOSTS) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      // Overpass User-Agent göndermeyen isteklere 406 döndürür; başlık zorunlu.
+      const res = await fetch(`${host}?data=${encodeURIComponent(q)}`, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'SafeDrive/1.0 (driver-behavior-platform)' }
+      });
+      clearTimeout(timer);
+      if (!res.ok) continue;
+      const data = await res.json();
+      for (const el of data.elements || []) {
+        const ms = el.tags && el.tags.maxspeed;
+        if (ms) {
+          // "30", "50 km/h", "30 mph" -> sadece sayı
+          const n = parseInt(String(ms).replace(/[^0-9]/g, ''), 10);
+          if (n) return n;
+        }
       }
+      return null; // ayna cevap verdi ama bu noktada hız sınırı yok
+    } catch (err) {
+      // timeout / ağ hatası -> sıradaki aynayı dene
     }
-    return null;
-  } catch (err) {
-    return null; // timeout / ağ hatası -> kontrolü atla
   }
+  return null;
 }
 
 // POST /api/sensor-data

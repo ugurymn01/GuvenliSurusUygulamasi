@@ -20,3 +20,7 @@ npm-debug.log*
 
 # Claude Code yerel ayarları
 .claude/
+
+# LibreOffice/Office kilit ve geçici dosyaları
+.~lock.*
+~$*

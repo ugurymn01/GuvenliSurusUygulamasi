@@ -292,7 +292,8 @@
 
       <button id="startBtn" class="btn-green">▶ Başlat</button>
       <button id="stopBtn" class="btn-red hidden">⏹ Durdur</button>
-      <button id="brakeBtn" class="btn-orange">🚨 Ani Fren Simüle Et</button>
+      <button id="brakeBtn" class="btn-orange">Ani Fren Simüle Et</button>
+      <button id="speedBtn" class="btn-orange">Hız Aşımı Simüle Et</button>
     </div>
 
     <div class="card">
@@ -943,11 +944,47 @@
         await postSensorData(buildPayload(-10)); // accelerometer.x = -10 -> HARD_BRAKE
         sentCount++;
         $('count').textContent = sentCount;
-        $('lastSent').textContent = '🚨 Ani fren verisi gönderildi (x = -10)';
+        $('lastSent').textContent = 'Ani fren verisi gönderildi (x = -10)';
       } catch (err) {
         $('lastSent').textContent = 'Demo hatası: ' + err.message;
       } finally {
         $('brakeBtn').disabled = false;
+      }
+    });
+
+    // ========================================================================
+    // HIZ AŞIMI SİMÜLASYONU (demo)
+    // Hız sınırı 30 km/h olan gerçek bir konuma (Odesa Bulvarı, İstanbul)
+    // 75 km/h hızla veri gönderir -> backend Overpass'tan 30 alır -> SPEED_LIMIT_EXCEEDED
+    // ========================================================================
+    $('speedBtn').addEventListener('click', async () => {
+      if (!token) {
+        alert('Önce giriş yapın');
+        return;
+      }
+      if (!currentDeviceId) {
+        alert('Cihaz henüz hazır değil, lütfen birkaç saniye bekleyin');
+        return;
+      }
+
+      $('speedBtn').disabled = true;
+      $('lastSent').textContent = 'Hız sınırı sorgulanıyor...';
+      try {
+        const payload = {
+          deviceId: currentDeviceId,
+          timestamp: new Date().toISOString(),
+          accelerometer: { x: 0, y: 0, z: 9.8 },
+          gyroscope: { alpha: 0, beta: 0, gamma: 0 },
+          location: { latitude: 41.0532519, longitude: 28.9687237, speed: 75 }
+        };
+        await postSensorData(payload);
+        sentCount++;
+        $('count').textContent = sentCount;
+        $('lastSent').textContent = 'Hız aşımı verisi gönderildi (75 km/h, limit 30)';
+      } catch (err) {
+        $('lastSent').textContent = 'Demo hatası: ' + err.message;
+      } finally {
+        $('speedBtn').disabled = false;
       }
     });
   </script>
