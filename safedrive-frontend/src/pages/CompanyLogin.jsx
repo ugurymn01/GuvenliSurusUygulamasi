@@ -42,9 +42,10 @@ export default function CompanyLogin() {
     <div className="login-wrap">
       <form className="login-card" onSubmit={handleSubmit}>
         <div className="login-brand">
-          <Logo size={40} />
+          <Logo size={26} />
         </div>
-        <div className="login-sub">Lojistik Şirketi Paneli</div>
+        <div className="login-title">Şirket girişi</div>
+        <div className="login-sub">Filo takip panelinize giriş yapın</div>
 
         <div className="form-group">
           <label>Email</label>

@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
 
@@ -14,7 +15,7 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <Logo size={28} />
+        <Logo size={18} />
         <div className="nav-links">
           <NavLink
             to="/admin"
@@ -60,7 +61,8 @@ export default function Navbar() {
             </span>
           )}
         </span>
-        <button className="btn btn-secondary btn-sm" onClick={handleLogout}>
+        <button className="btn btn-ghost btn-sm" onClick={handleLogout}>
+          <LogOut size={15} />
           Çıkış
         </button>
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
@@ -44,9 +44,10 @@ export default function Login() {
     <div className="login-wrap">
       <form className="login-card" onSubmit={handleSubmit}>
         <div className="login-brand">
-          <Logo size={40} />
+          <Logo size={26} />
         </div>
-        <div className="login-sub">Yönetici Paneli</div>
+        <div className="login-title">Tekrar hoş geldiniz</div>
+        <div className="login-sub">Yönetici panelinize giriş yapın</div>
 
         <div className="form-group">
           <label>Email</label>
@@ -82,6 +83,12 @@ export default function Login() {
         </button>
 
         {error && <div className="error-msg">{error}</div>}
+
+        <div className="login-foot">
+          <Link to="/company-login" className="login-link">
+            Şirket girişi için tıklayın
+          </Link>
+        </div>
       </form>
     </div>
   );

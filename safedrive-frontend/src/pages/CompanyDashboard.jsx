@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { io } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import AlarmBadge from '../components/AlarmBadge';
@@ -264,7 +265,7 @@ export default function CompanyDashboard() {
       {/* Üst başlık */}
       <div className="company-header">
         <div className="company-header-left">
-          <Logo size={30} withText={false} />
+          <Logo size={20} />
           <div>
             <h1 className="page-title" style={{ marginBottom: 2 }}>
               {user?.name || user?.username}
@@ -274,7 +275,8 @@ export default function CompanyDashboard() {
             </div>
           </div>
         </div>
-        <button className="btn btn-secondary btn-sm" onClick={handleLogout}>
+        <button className="btn btn-ghost btn-sm" onClick={handleLogout}>
+          <LogOut size={15} />
           Çıkış
         </button>
       </div>
@@ -313,6 +315,13 @@ export default function CompanyDashboard() {
 
         {/* Sağ: harita */}
         <div className="card map-card">
+          <div className="map-header">
+            <h2>Canlı Konum</h2>
+            <span className="live-indicator">
+              <span className="live-dot" />
+              Canlı
+            </span>
+          </div>
           <MapContainer center={mapCenter} zoom={markers.length ? 11 : 6} className="map">
             <TileLayer
               attribution='&copy; OpenStreetMap'
