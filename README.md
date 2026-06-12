@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" width="200" alt="SafeDrive Logo">
+  <img src="logo.png" width="300" alt="SafeDrive Logo">
 </p>
 
 # SafeDrive — Güvenli Sürüş ve Sürücü Davranış Analizi Platformu
