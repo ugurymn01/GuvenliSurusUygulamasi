@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" width="300"  height="100" alt="SafeDrive Logo">
+  <img src="logo.png" width="300"  height="150" alt="SafeDrive Logo">
 </p>
 
 # SafeDrive — Güvenli Sürüş ve Sürücü Davranış Analizi Platformu
@@ -381,7 +381,7 @@ Sistemin temel akışlarını test etmek için Postman koleksiyonu repo'da mevcu
 ---
 
 <p align="center">
-  <img src="logo.png" width="300" height="100" alt="SafeDrive Logo">
+  <img src="logo.png" width="300" height="150" alt="SafeDrive Logo">
 </p>
 
 # SafeDrive — Güvenli Sürüş ve Sürücü Davranış Analizi Platformu
