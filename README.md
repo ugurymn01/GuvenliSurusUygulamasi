@@ -6,21 +6,6 @@ Lojistik ve otobüs firmalarına yönelik gerçek zamanlı sürücü takip siste
 
 ---
 
-## 📋 İçindekiler
-
-- [Özellikler](#özellikler)
-- [Sistem Mimarisi](#sistem-mimarisi)
-- [Teknolojiler](#teknolojiler)
-- [Kullanıcı Rolleri](#kullanıcı-rolleri)
-- [Kurulum](#kurulum)
-- [API Dokümantasyonu](#api-dokümantasyonu)
-- [Anomali Tespiti](#anomali-tespiti)
-- [Sürüş Skoru Sistemi](#sürüş-skoru-sistemi)
-- [Veritabanı Modeli](#veritabanı-modeli)
-- [Ekip](#ekip)
-
----
-
 ## ✨ Özellikler
 
 - 📍 **Gerçek zamanlı araç takibi** — Leaflet haritasında canlı konum
