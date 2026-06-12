@@ -8,14 +8,14 @@ Lojistik ve otobüs firmalarına yönelik gerçek zamanlı sürücü takip siste
 
 ## ✨ Özellikler
 
-- 📍 **Gerçek zamanlı araç takibi** — Leaflet haritasında canlı konum
-- ⚠️ **Otomatik anomali tespiti** — Ani fren, sert dönüş, hız ihlali vb.
-- 🏆 **Sürücü skoru** — 0–100 arası dinamik puanlama sistemi
-- 🔔 **Anlık alarm bildirimleri** — Socket.io ile sıfır gecikmeli bildirim
-- 📊 **7 günlük skor grafiği** — Sürücü performans trendi
-- 🚗 **Hız sınırı kontrolü** — OpenStreetMap Overpass API entegrasyonu
-- 📱 **Uygulama indirme yok** — Mobil tarayıcıda çalışır
-- ☁️ **Bulut tabanlı** — Render + Vercel + MongoDB Atlas
+-  **Gerçek zamanlı araç takibi** — Leaflet haritasında canlı konum
+-  **Otomatik anomali tespiti** — Ani fren, sert dönüş, hız ihlali vb.
+-  **Sürücü skoru** — 0–100 arası dinamik puanlama sistemi
+-  **Anlık alarm bildirimleri** — Socket.io ile sıfır gecikmeli bildirim
+-  **7 günlük skor grafiği** — Sürücü performans trendi
+-  **Hız sınırı kontrolü** — OpenStreetMap Overpass API entegrasyonu
+-  **Uygulama indirme yok** — Mobil tarayıcıda çalışır
+-  **Bulut tabanlı** — Render + Vercel + MongoDB Atlas
 
 ---
 
@@ -368,9 +368,9 @@ Sistemin temel akışlarını test etmek için Postman koleksiyonu repo'da mevcu
 
 | İsim | Öğrenci No | Görev |
 |---|---|---|
-| Nihat Efe Bozkan | 22360859033 | Backend, anomali tespiti, hız sınırı, skor sistemi, deploy, test |
-| Muhammet Uğur Yaman | 22360859023 | Web paneli, harita, skor grafiği, Vercel deploy |
-| Yunus Emre Nallı | 22360859079 | Mobil uygulama, sensör entegrasyonu, dokümantasyon |
+| Nihat Efe Bozkan | 22360859033 | backend , anomali tespiti , hız sınırı kontrolu , postman test kontrolü  |
+| Muhammet Uğur Yaman | 22360859023 | harita entegrasyonu , skor grafikleri ve tabloları , surus skoru , sensör entegrasyonu , proje raporu ve dokumantasyon  |
+| Yunus Emre Nallı | 22360859079 | web paneli , mobil html , dashboard , deploy |
 
 ---
 
