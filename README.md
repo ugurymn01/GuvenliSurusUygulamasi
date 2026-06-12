@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="logo.png" width="300" alt="SafeDrive Logo">
+  <img src="logo.png" width="300" alt="SafeDrive Logo" style="transform: scaleX(1.5);">
 </p>
 
 # SafeDrive — Güvenli Sürüş ve Sürücü Davranış Analizi Platformu
 
-# 🚗 SafeDrive
+#  SafeDrive
 
 **Güvenli Sürüş ve Sürücü Davranış Analizi Platformu**
 
@@ -12,7 +12,7 @@ Lojistik ve otobüs firmalarına yönelik gerçek zamanlı sürücü takip siste
 
 ---
 
-## ✨ Özellikler
+##  Özellikler
 
 -  **Gerçek zamanlı araç takibi** — Leaflet haritasında canlı konum
 -  **Otomatik anomali tespiti** — Ani fren, sert dönüş, hız ihlali vb.
@@ -25,21 +25,21 @@ Lojistik ve otobüs firmalarına yönelik gerçek zamanlı sürücü takip siste
 
 ---
 
-## 🏗️ Sistem Mimarisi
+##  Sistem Mimarisi
 
 ```
-[📱 Mobil HTML Sayfası]
+[ Mobil HTML Sayfası]
    DeviceMotionEvent  →  ivmeölçer (x,y,z) + jiroskop (alpha,beta,gamma)
    Geolocation API    →  latitude, longitude, speed
    Her 2 saniye       →  POST /api/sensor-data  (JWT Bearer)
            │
            ▼
-[⚙️ Node.js + Express — Render]
+[ Node.js + Express — Render]
    JWT doğrulama → veriyi kaydet → anomali kontrol et
    Alarm üret    → skoru güncelle → Socket.io emit et
            │                    │
            ▼                    ▼
-[🗄️ MongoDB Atlas]     [💻 React Web Paneli — Vercel]
+[ MongoDB Atlas]     [ React Web Paneli — Vercel]
    users               Canlı harita (Leaflet)
    devices             Alarm listesi
    sensorData          Sürücü skor tablosu
@@ -50,7 +50,7 @@ Lojistik ve otobüs firmalarına yönelik gerçek zamanlı sürücü takip siste
 
 ---
 
-## 🛠️ Teknolojiler
+##  Teknolojiler
 
 | Katman | Teknoloji | Açıklama |
 |---|---|---|
@@ -66,7 +66,7 @@ Lojistik ve otobüs firmalarına yönelik gerçek zamanlı sürücü takip siste
 
 ---
 
-## 👥 Kullanıcı Rolleri
+##  Kullanıcı Rolleri
 
 ### 🔴 Sistem Yöneticisi (Admin)
 - Tüm kullanıcıları ve cihazları yönetir
@@ -85,7 +85,7 @@ Lojistik ve otobüs firmalarına yönelik gerçek zamanlı sürücü takip siste
 
 ---
 
-## ⚙️ Kurulum
+##  Kurulum
 
 ### Gereksinimler
 
@@ -168,7 +168,7 @@ docker run -d \
 
 ---
 
-## 📡 API Dokümantasyonu
+##  API Dokümantasyonu
 
 ### Auth Endpoint'leri
 
@@ -238,7 +238,7 @@ Content-Type: application/json
 
 ---
 
-## ⚠️ Anomali Tespiti
+##  Anomali Tespiti
 
 Her sensör verisi geldiğinde `anomalyDetector` modülü devreye girer. İlk eşleşen anomali alarm üretir ve skoru düşürür.
 
@@ -259,7 +259,7 @@ Her sensör verisinde GPS koordinatına göre OpenStreetMap Overpass API'den yol
 
 ---
 
-## 🏆 Sürüş Skoru Sistemi
+##  Sürüş Skoru Sistemi
 
 Her sürücü **100 puan** ile başlar. Kötü davranışlarda düşer, 10 dakika temiz sürüşte +1 kazanılır (maks 100).
 
@@ -276,7 +276,7 @@ Skor renk skalası: 🟢 80–100 · 🟡 60–79 · 🔴 0–59
 
 ---
 
-## 🗄️ Veritabanı Modeli
+##  Veritabanı Modeli
 
 ### users
 ```
@@ -342,7 +342,7 @@ scoreHistory  [{ score, reason, change, timestamp }]
 
 ---
 
-## 🧪 Test
+##  Test
 
 Sistemin temel akışlarını test etmek için Postman koleksiyonu repo'da mevcuttur.
 
@@ -358,7 +358,7 @@ Sistemin temel akışlarını test etmek için Postman koleksiyonu repo'da mevcu
 
 ---
 
-## ☁️ Deploy
+##  Deploy
 
 | Servis | Kullanım |
 |---|---|
@@ -370,7 +370,7 @@ Sistemin temel akışlarını test etmek için Postman koleksiyonu repo'da mevcu
 
 ---
 
-## 👨‍💻 Ekip
+##  Ekip
 
 | İsim | Öğrenci No | Görev |
 |---|---|---|
@@ -381,7 +381,7 @@ Sistemin temel akışlarını test etmek için Postman koleksiyonu repo'da mevcu
 ---
 
 <p align="center">
-  <img src="logo.png" width="200" alt="SafeDrive Logo">
+  <img src="logo.png" width="200" alt="SafeDrive Logo" style="transform: scaleX(1.5);">
 </p>
 
 # SafeDrive — Güvenli Sürüş ve Sürücü Davranış Analizi Platformu
