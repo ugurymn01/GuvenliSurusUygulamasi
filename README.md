@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="logo.png" width="200" alt="SafeDrive Logo">
+</p>
+
+# SafeDrive — Güvenli Sürüş ve Sürücü Davranış Analizi Platformu
+
 # 🚗 SafeDrive
 
 **Güvenli Sürüş ve Sürücü Davranış Analizi Platformu**
@@ -373,5 +379,11 @@ Sistemin temel akışlarını test etmek için Postman koleksiyonu repo'da mevcu
 | Yunus Emre Nallı | 22360859079 | web paneli , mobil html , dashboard , deploy |
 
 ---
+
+<p align="center">
+  <img src="logo.png" width="200" alt="SafeDrive Logo">
+</p>
+
+# SafeDrive — Güvenli Sürüş ve Sürücü Davranış Analizi Platformu
 
 **Bursa Teknik Üniversitesi — Bilgisayar Mühendisliği — Node.js ile Web Programlama — 2025–2026**
